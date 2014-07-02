@@ -23,7 +23,7 @@ var taskGraphExample = {
         "payload": {
             image:    'registry.taskcluster.net/raluca/telemetry-mr-base',     // docker image identifier
             command:  [             // Command followed by arguments to execute
-                'node', '/bin/mapper/downloader.js',
+                'node', '/opt/analysis-tools/downloader.js',
                 "saved_session/Fennec/nightly/22.0a1/20130227030925.20131101.v2.log.cc03cd521ba84613808daf1e0d6d3ab6.lzma",
                 "saved_session/Fennec/nightly/22.0a1/20130329030904.20140310.v2.log.8ecdaa95df95421a8f50f7571d2c8954.lzma",
 
