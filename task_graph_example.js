@@ -21,15 +21,25 @@ var taskGraphExample = {
         "created":          "2014-03-01T22:19:32.124Z",
         "deadline":         "2060-03-01T22:19:32.124Z",
         "payload": {
-          "image":          "ubuntu:latest",
-          "command": [
-            "/bin/bash", "-c",
-            "echo 'Hello World'"
-          ],
-          "features": {
-            "azureLivelog": true
-          },
-          "maxRunTime":     600
+            image:    'registry.taskcluster.net/raluca/telemetry-mr-base',     // docker image identifier
+            command:  [             // Command followed by arguments to execute
+                'node', '/bin/mapper/downloader.js',
+                "saved_session/Fennec/nightly/22.0a1/20130227030925.20131101.v2.log.cc03cd521ba84613808daf1e0d6d3ab6.lzma",
+                "saved_session/Fennec/nightly/22.0a1/20130329030904.20140310.v2.log.8ecdaa95df95421a8f50f7571d2c8954.lzma",
+
+            ],
+            env: { KEY: 'value' },  // Environment variables for the container
+            features: {             // Set of optional features
+                bufferLog:    false,  // Debug log everything to result.json blob
+                azureLiveLog: true,   // Live log everything to azure, see logs.json
+                artifactLog:  false   // Log every to an artifact uploaded at end of run
+            },
+            artifacts: {
+                // Name:              Source:
+                'passwd.txt':         '/etc/passwd',
+                'result': '/bin/mapper/result.txt'
+            },
+            maxRunTime:             600 // Maximum allowed run time
         },
         "metadata": {
           "name":           "Print `'Hello World'` Once",
