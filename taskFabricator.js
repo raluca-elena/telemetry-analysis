@@ -45,9 +45,12 @@ exports.fabricateIndependentTask = function (label, image) {
         task['task']['payload']['image'] = image;
     return JSON.parse(JSON.stringify(task));
 }
-exports.fabricateDependentTask = function (label, dependencies) {
+exports.fabricateDependentTask = function (label, dependencies, command) {
     task['label'] = label;
     task['requires'] = dependencies;
+    if (command)
+        task['task']['payload']['command'] = command;
+
     return JSON.parse(JSON.stringify(task));
 
 }
