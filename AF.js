@@ -47,7 +47,7 @@ fs.readFile(file, 'utf8', function (err, data) {
                             }
                         }
                     }
-                    console.log("total size of files is---- ", totalSize);
+                    console.log("total size of files is ", totalSize);
                     //console.log("files are", files);
                     //console.log("sizes are", size);
                     var depForReducer = [];
@@ -55,27 +55,44 @@ fs.readFile(file, 'utf8', function (err, data) {
                     for (key in graphSkeleton) {
                         if (key === "tasks") {
                             //algo to spawn as many tasks as needed by using the size of the files
-                            for (var i = 0; i < 5; i++) {
+
+                            var i = 0;
+                            totalSize = totalSize /(1024);
+                            while(totalSize >= 0) {
+                                console.log("total size at the beginning ", totalSize);
                                 graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image));
                                 depForReducer.push("mapper_" + i);
-                            }
-                            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer));
-                        }
-                    }
-                    //add work load for every task
-                    for (key in graphSkeleton) {
-                        if (key === "tasks") {
-                            for (var task in graphSkeleton[key]) {
-                                if (graphSkeleton[key][task]['label'] !== 'reducer') {
-                                    for (var j = 0; j < 5; j++) {
+                                i++;
+                                for (var task in graphSkeleton[key]) {
+                                    var loadOnMapper = 0;
+                                    while (loadOnMapper < (1024 * 1024) && size.length != 0) {
                                         graphSkeleton[key][task]['task']['payload']['command'].push(files.pop());
+                                        loadOnMapper += size.pop();
+                                        console.log("load on mapper is ", loadOnMapper);
                                     }
-                                } else {
-                                    graphSkeleton[key][task]['task']['payload']['command'] = ['echo', 'I am a reducer B)'] ;
+                                    totalSize = totalSize - loadOnMapper;
+                                    console.log("total size at this point is", totalSize);
                                 }
                             }
+                            //graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer));
+                            //graphSkeleton[key][task]['task']['payload']['command'] = ['echo', 'I am a reducer B)'] ;
+
                         }
                     }
+                    for (key in graphSkeleton) {
+                        if (key === "tasks") {
+                                graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer));
+                                for (var task in graphSkeleton[key]) {
+                                    if (graphSkeleton[key][task]['label'] === 'reducer') {
+                                        console.log("AAAAAAA");
+                                        graphSkeleton[key][task]['task']['payload']['command'] = ['echo', 'I am a reducer B)'];
+                                        break;
+                                    }
+                                }
+                            }
+                    }
+
+
 
                     //post a taskGraph
                     request
