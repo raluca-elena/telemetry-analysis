@@ -14,19 +14,14 @@ var file = argv[0];
 var image = argv[1];
 //give me image too
 //give me env variables
-fs.readFile(file, 'utf8', function (err, data) {
-    if (err) {
-        console.log('Error: ' + err);
-        return;
-    }
-
-    data = JSON.parse(data);
-    filter = {"filter":data};
-    var result;
-    var files = [];
-    var size = [];
-    var totalSize = 0;
-    function queryForSpecificFiles(url, filter) {
+var data = fs.readFileSync(file, 'utf8')
+data = JSON.parse(data);
+filter = {"filter":data};
+var result;
+var files = [];
+var size = [];
+var totalSize = 0;
+function queryForSpecificFiles(url, filter) {
         request
             .post('http://localhost:8080/files')
             .send(filter)
@@ -133,6 +128,6 @@ fs.readFile(file, 'utf8', function (err, data) {
 
 
     }
-    queryForSpecificFiles(myFakeServ, filter);
-});
+queryForSpecificFiles(myFakeServ, filter);
+//});
 
