@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var request = require('superagent');
 var myFakeServ = "http://localhost:8080/files";
 var gskeleton = require('./GraphSkeleton');
@@ -10,6 +11,9 @@ argv.shift();
 argv.shift();
 var fs = require('fs');
 var file = argv[0];
+var image = argv[1];
+//give me image too
+//give me env variables
 fs.readFile(file, 'utf8', function (err, data) {
     if (err) {
         console.log('Error: ' + err);
@@ -21,6 +25,7 @@ fs.readFile(file, 'utf8', function (err, data) {
     var result;
     var files = [];
     var size = [];
+    var totalSize = 0;
     function queryForSpecificFiles(url, filter) {
         request
             .post('http://localhost:8080/files')
@@ -28,44 +33,46 @@ fs.readFile(file, 'utf8', function (err, data) {
             .set('Accept', 'application/json')
             .end(function(res){
                 if (res.ok) {
+                    var result = JSON.parse(JSON.stringify(res.body));
 
-                    result = JSON.stringify(res.body);
-                    var y = JSON.parse(result);
-                    console.log('yay got ' + result);
-
-                    for (var i= 0; i < y.length; i++) {
-                        console.log("line  ", y[i]);
-                        for (var key in y[i]) {
+                    for (var i= 0; i < result.length; i++) {
+                        //console.log("line  ", result[i]);
+                        for (var key in result[i]) {
                             if (key == 'file_name') {
-                                //console.log(y[i][key]);
-                                files.push(y[i][key]);
+                                files.push(result[i][key]);
                             }
                             if (key == 'file_size') {
-                                //console.log(y[i][key]);
-                                size.push(y[i][key]);
+                                size.push(result[i][key]);
+                                totalSize += result[i][key];
                             }
-
                         }
                     }
-
-                    console.log("files are", files);
-                    console.log("sizes are", size);
-
+                    console.log("total size of files is---- ", totalSize);
+                    //console.log("files are", files);
+                    //console.log("sizes are", size);
+                    var depForReducer = [];
                     //add tasks to taskGraph
                     for (key in graphSkeleton) {
                         if (key === "tasks") {
                             //algo to spawn as many tasks as needed by using the size of the files
                             for (var i = 0; i < 5; i++) {
-                                graphSkeleton[key].push(taskModule.fabricatedTask( "mapper_" + i));
+                                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image));
+                                depForReducer.push("mapper_" + i);
                             }
+                            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer));
                         }
                     }
                     //add work load for every task
                     for (key in graphSkeleton) {
                         if (key === "tasks") {
                             for (var task in graphSkeleton[key]) {
-                                for (var j = 0; j < 5; j++)
-                                    graphSkeleton[key][task]['task']['payload']['command'].push(files.pop());
+                                if (graphSkeleton[key][task]['label'] !== 'reducer') {
+                                    for (var j = 0; j < 5; j++) {
+                                        graphSkeleton[key][task]['task']['payload']['command'].push(files.pop());
+                                    }
+                                } else {
+                                    graphSkeleton[key][task]['task']['payload']['command'] = ['echo', 'I am a reducer B)'] ;
+                                }
                             }
                         }
                     }
