@@ -5,7 +5,7 @@ var task = {
     "task": {
         "version":          "0.2.0",
         "provisionerId":    "aws-provisioner",
-        "workerType":       "{{test-worker-type}}",
+        "workerType":       "raluca",
         "routing":          "",
         "timeout":          600,
         "retries":          3,
@@ -39,9 +39,17 @@ var task = {
     }
 };
 
-exports.fabricatedTask = function fabricateTask(label) {
+exports.fabricateIndependentTask = function (label, image) {
     task['label'] = label;
+    if (image)
+        task['task']['payload']['image'] = image;
     return JSON.parse(JSON.stringify(task));
+}
+exports.fabricateDependentTask = function (label, dependencies) {
+    task['label'] = label;
+    task['requires'] = dependencies;
+    return JSON.parse(JSON.stringify(task));
+
 }
 
 //get image and...
