@@ -1,5 +1,5 @@
 var aws = require('aws-sdk');
-aws.config.loadFromPath('config.json');
+aws.config.loadFromPath('config1.json');
 var sts = new aws.STS();
 var policy = {
     "Version": "2012-10-17",

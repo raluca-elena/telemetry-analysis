@@ -13,7 +13,7 @@ var task = {
         "created": new Date().toISOString(),
         "deadline": new Date(+new Date + 12096e5).toISOString(),
         "payload": {
-            "image":          'registry.taskcluster.net/vagrant',
+            "image":          'registry.taskcluster.net/ralu',
             "command": [
                 'node', '/opt/analysis-tools/downloader.js',
             ],
@@ -40,29 +40,32 @@ var task = {
     }
 };
 
-exports.fabricateIndependentTask = function (label, image, load) {
+exports.fabricateIndependentTask = function (label, image, load, env) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
-    if (image)
+    if (image) {
         newTask['task']['payload']['image'] = image;
+    }
     if (load) {
         newTask['task']['payload']['command'] = newTask['task']['payload']['command'].concat(load);
     }
+    if (env) {
+        newTask['task']['payload']['env'] = env;
+    }
     return newTask;
-    //return JSON.parse(JSON.stringify(task));
 }
 
 exports.fabricateDependentTask = function (label, dependencies, command, env) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
     newTask['requires'] = dependencies;
-    if (command)
+    if (command) {
         newTask['task']['payload']['command'] = command;
-    if (env)
+    }
+    if (env) {
         newTask['task']['payload']['env'] = env;
+    }
     return newTask;
-    //return JSON.parse(JSON.stringify(task));
-
 }
 
 //get image and...

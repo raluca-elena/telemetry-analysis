@@ -9,22 +9,19 @@ graphSkeleton = gskeleton.graphSkeleton;
 taskModule =  require('./taskFabricator');
 
 var argv = process.argv;
+
 //drop node and name of script, should be replaced with some commander.js call
 argv.shift();
 argv.shift();
 var file = argv[0];
 var image = argv[1];
-var envVar = argv[2];
+var envVar = argv[2] ? JSON.parse(argv[2]) : {};
 
 //give me env variables
 var data = fs.readFileSync(file, 'utf8')
 data = JSON.parse(data);
 var filter = {"filter": data};
 var result;
-//var files = [];
-//var size = [];
-//var totalSize = 0;
-
 function getMapperTasksIdsAsEnv(labels) {
     var str = "";
     for (var i = 0; i < labels.length -1; i++)
@@ -52,7 +49,7 @@ function parseIndexDBResponse(response) {
         "size" : size,
         "totalSize" : totalSize
     }
-    console.log("total size is ----", totalSize, "files");
+    console.log("total files size per graph ", totalSize);
     return response;
 }
 
@@ -65,7 +62,6 @@ function createLoadForTask(files, size, totalSize, customLoad) {
     }
 
     while(totalSize > 0 && sizeOfLoad < maxLoad && files.length > 0) {
-        console.log("MMM: totalSize: ", totalSize, "sizeOfLoad:", sizeOfLoad, "load:", load.length, "files:", files.length);
         var sizeOfFile = size.pop();
         sizeOfLoad += sizeOfFile;
         load.push(files.pop());
@@ -78,6 +74,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         "totalSize": totalSize,
         "load": load
     }
+    console.log("LOAD is ", load);
     return response;
 }
 
@@ -90,22 +87,16 @@ function constructGraph(files, size, totalSize) {
         if (key === "tasks") {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
-            console.log("total size predivision  is ", totalSize, " and has type", typeof totalSize);
-            //totalSize = totalSize/2.0;
-            //totalSize --;
-            console.log("total size postdivision is ", totalSize, " and has type", typeof totalSize);
             while (totalSize > 0) {
-                console.log("------------total size at the beginning ", totalSize);
                 var ld = createLoadForTask(files, size, totalSize);
                 totalSize = ld["totalSize"];
-                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"]));
+                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar));
                 depForReducer.push("mapper_" + i);
                 i++;
             }
         }
     }
     var env = getMapperTasksIdsAsEnv(depForReducer);
-
     for (key in graphSkeleton) {
         if (key === "tasks") {
             graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', 'I am a reducer B)'], env));
@@ -122,12 +113,10 @@ function queryForSpecificFiles(url, filter) {
             if (res.ok) {
                 var result = JSON.parse(JSON.stringify(res.body));
                 var resp = parseIndexDBResponse(result);
-                //files = resp["files"];
-                //size = resp["size"];
-                //console.log("total size of files is ", totalSize);
                 constructGraph(resp["files"], resp["size"], resp["totalSize"]);
+
                 //post a taskGraph
-                // postGraph(taskClusterCreateGraphUrl, graphSkeleton);
+                postGraph(taskClusterCreateGraphUrl, graphSkeleton);
             } else {
                 console.log('Oh no! error ' + res.text);
             }
@@ -141,14 +130,11 @@ function postGraph(url, graphToPost) {
         .end(function (res) {
             if (res.ok) {
                 console.log(JSON.stringify(res.body));
-                var x = "http://docs.taskcluster.net/tools/task-graph-inspector/#";
-                console.log(x + res.body.status.taskGraphId)
+                var graph = "http://docs.taskcluster.net/tools/task-graph-inspector/#";
+                console.log(graph + res.body.status.taskGraphId)
 
                 //make requests for status
                 var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
-                //var tableAccesUrl = "http://scheduler.taskcluster.net/v1/task-graph/table-access"
-                //var infoUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/info";
-                //console.log("link for info is ", info);
                 console.log(inspectUrl);
 
                 request
