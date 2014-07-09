@@ -17,6 +17,7 @@ var task = {
             "command": [
                 'node', '/opt/analysis-tools/downloader.js',
             ],
+            env: {},
             "features": {
                 "azureLivelog": true
             },
@@ -51,12 +52,14 @@ exports.fabricateIndependentTask = function (label, image, load) {
     //return JSON.parse(JSON.stringify(task));
 }
 
-exports.fabricateDependentTask = function (label, dependencies, command) {
+exports.fabricateDependentTask = function (label, dependencies, command, env) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
     newTask['requires'] = dependencies;
     if (command)
         newTask['task']['payload']['command'] = command;
+    if (env)
+        newTask['task']['payload']['env'] = env;
     return newTask;
     //return JSON.parse(JSON.stringify(task));
 
