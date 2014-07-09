@@ -3,14 +3,15 @@ var request = require('superagent');
 var myFakeServ = "http://localhost:8080/files";
 var taskClusterCreateGraphUrl = 'http://scheduler.taskcluster.net/v1/task-graph/create';
 var gskeleton = require('./GraphSkeleton');
+var fs = require('fs');
 
 graphSkeleton = gskeleton.graphSkeleton;
 taskModule =  require('./taskFabricator');
 
 var argv = process.argv;
+//drop node and name of script, should be replaced with some commander.js call
 argv.shift();
 argv.shift();
-var fs = require('fs');
 var file = argv[0];
 var image = argv[1];
 var envVar = argv[2];
@@ -18,11 +19,21 @@ var envVar = argv[2];
 //give me env variables
 var data = fs.readFileSync(file, 'utf8')
 data = JSON.parse(data);
-filter = {"filter":data};
+var filter = {"filter": data};
 var result;
 var files = [];
 var size = [];
 var totalSize = 0;
+
+function getMapperTasksIdsAsEnv(labels) {
+    var str = "";
+    for (var i = 0; i < labels.length -1; i++)
+        str = str.concat("{{taskId:"+labels[i]+"}} ");
+    str = str.concat("{{taskId:"+labels[labels.length-1]+"}}");
+    return {"INPUT_TASK_IDS": str};
+}
+
+
 
 function parseIndexDBResponse(response) {
     for (var i= 0; i < response.length; i++) {
@@ -35,6 +46,7 @@ function parseIndexDBResponse(response) {
             }
         }
     }
+    console.log("total size is ----", totalSize);
 }
 
 function createLoadForTask(files, size, customLoad) {
@@ -71,9 +83,11 @@ function constructGraph() {
             }
         }
     }
+    var env = getMapperTasksIdsAsEnv(depForReducer);
+
     for (key in graphSkeleton) {
         if (key === "tasks") {
-            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', 'I am a reducer B)']));
+            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', 'I am a reducer B)'], env));
         }
     }
 }
