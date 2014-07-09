@@ -13,7 +13,8 @@ argv.shift();
 var fs = require('fs');
 var file = argv[0];
 var image = argv[1];
-//give me image too
+var envVar = argv[2];
+
 //give me env variables
 var data = fs.readFileSync(file, 'utf8')
 data = JSON.parse(data);
@@ -36,6 +37,21 @@ function parseIndexDBResponse(response) {
     }
 }
 
+function createLoadForTask(files, size, customLoad) {
+    var maxLoad = 1024 * 1024;
+    var load = [];
+    var sizeOfLoad = 0;
+    if (customLoad)
+        maxLoad = customLoad;
+    while(totalSize > 0 && sizeOfLoad < maxLoad && files.length > 0) {
+        var sizeOfFile = size.pop();
+        sizeOfLoad += sizeOfFile;
+        load.push(files.pop());
+        totalSize -= sizeOfFile;
+    }
+    return load;
+}
+
 function constructGraph() {
     //add all mappers that should be the dependencies for the reducer
     var depForReducer = [];
@@ -48,21 +64,10 @@ function constructGraph() {
             totalSize = totalSize /(1024);
             while(totalSize >= 0) {
                 console.log("------------total size at the beginning ", totalSize);
-                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image));
+                var ld = createLoadForTask(files, size);
+                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld));
                 depForReducer.push("mapper_" + i);
                 i++;
-                for (var task in graphSkeleton[key]) {
-                    //current total size of files per mapper
-                    var loadOnMapper = 0;
-                    while (loadOnMapper < (1024 * 1024) && size.length != 0) {
-                        graphSkeleton[key][task]['task']['payload']['command'].push(files.pop());
-                        loadOnMapper += size.pop();
-                    }
-                    console.log("size of load on :", graphSkeleton[key][task]['label'], "is : ", loadOnMapper);
-
-                    totalSize = totalSize - loadOnMapper;
-                    console.log("size left to distribute ", totalSize);
-                }
             }
         }
     }
