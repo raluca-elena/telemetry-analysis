@@ -39,19 +39,26 @@ var task = {
     }
 };
 
-exports.fabricateIndependentTask = function (label, image) {
-    task['label'] = label;
+exports.fabricateIndependentTask = function (label, image, load) {
+    var newTask = JSON.parse(JSON.stringify(task));
+    newTask['label'] = label;
     if (image)
-        task['task']['payload']['image'] = image;
-    return JSON.parse(JSON.stringify(task));
+        newTask['task']['payload']['image'] = image;
+    if (load) {
+        newTask['task']['payload']['command'] = newTask['task']['payload']['command'].concat(load);
+    }
+    return newTask;
+    //return JSON.parse(JSON.stringify(task));
 }
-exports.fabricateDependentTask = function (label, dependencies, command) {
-    task['label'] = label;
-    task['requires'] = dependencies;
-    if (command)
-        task['task']['payload']['command'] = command;
 
-    return JSON.parse(JSON.stringify(task));
+exports.fabricateDependentTask = function (label, dependencies, command) {
+    var newTask = JSON.parse(JSON.stringify(task));
+    newTask['label'] = label;
+    newTask['requires'] = dependencies;
+    if (command)
+        newTask['task']['payload']['command'] = command;
+    return newTask;
+    //return JSON.parse(JSON.stringify(task));
 
 }
 
