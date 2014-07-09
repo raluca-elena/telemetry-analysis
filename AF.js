@@ -33,10 +33,8 @@ function getMapperTasksIdsAsEnv(labels) {
     return {"INPUT_TASK_IDS": str};
 }
 
-
-
 function parseIndexDBResponse(response) {
-    for (var i= 0; i < response.length; i++) {
+    for (var i = 0; i < response.length; i++) {
         for (var key in response[i]) {
             if (key == 'file_name') {
                 files.push(response[i][key]);
@@ -50,7 +48,7 @@ function parseIndexDBResponse(response) {
 }
 
 function createLoadForTask(files, size, customLoad) {
-    var maxLoad = 1024 * 1024;
+    var maxLoad = 1024 * 1024 * 1024;
     var load = [];
     var sizeOfLoad = 0;
     if (customLoad)
@@ -69,12 +67,14 @@ function constructGraph() {
     var depForReducer = [];
 
     //add tasks to taskGraph
-    for (key in graphSkeleton) {
+    for (var key in graphSkeleton) {
         if (key === "tasks") {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
-            totalSize = totalSize /(1024);
-            while(totalSize >= 0) {
+            console.log("total size predivision  is ", totalSize, " and has type", typeof totalSize);
+            totalSize = totalSize/2.0;
+            console.log("total size postdivision is ", totalSize, " and has type", typeof totalSize);
+            while (totalSize >= 0) {
                 console.log("------------total size at the beginning ", totalSize);
                 var ld = createLoadForTask(files, size);
                 graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld));
@@ -104,7 +104,7 @@ function queryForSpecificFiles(url, filter) {
                 console.log("total size of files is ", totalSize);
                 constructGraph();
                 //post a taskGraph
-                postGraph(taskClusterCreateGraphUrl, graphSkeleton);
+                // postGraph(taskClusterCreateGraphUrl, graphSkeleton);
             } else {
                 console.log('Oh no! error ' + res.text);
             }
@@ -123,8 +123,8 @@ function postGraph(url, graphToPost) {
 
                 //make requests for status
                 var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
-                var tableAccesUrl = "http://scheduler.taskcluster.net/v1/task-graph/table-access"
-                var infoUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/info";
+                //var tableAccesUrl = "http://scheduler.taskcluster.net/v1/task-graph/table-access"
+                //var infoUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/info";
                 //console.log("link for info is ", info);
                 console.log(inspectUrl);
 
