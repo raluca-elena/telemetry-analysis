@@ -21,9 +21,9 @@ var data = fs.readFileSync(file, 'utf8')
 data = JSON.parse(data);
 var filter = {"filter": data};
 var result;
-var files = [];
-var size = [];
-var totalSize = 0;
+//var files = [];
+//var size = [];
+//var totalSize = 0;
 
 function getMapperTasksIdsAsEnv(labels) {
     var str = "";
@@ -34,6 +34,9 @@ function getMapperTasksIdsAsEnv(labels) {
 }
 
 function parseIndexDBResponse(response) {
+    var files = [];
+    var size = [];
+    var totalSize = 0;
     for (var i = 0; i < response.length; i++) {
         for (var key in response[i]) {
             if (key == 'file_name') {
@@ -44,25 +47,41 @@ function parseIndexDBResponse(response) {
             }
         }
     }
-    console.log("total size is ----", totalSize);
+    var response = {
+        "files" : files,
+        "size" : size,
+        "totalSize" : totalSize
+    }
+    console.log("total size is ----", totalSize, "files");
+    return response;
 }
 
-function createLoadForTask(files, size, customLoad) {
+function createLoadForTask(files, size, totalSize, customLoad) {
     var maxLoad = 1024 * 1024 * 1024;
     var load = [];
     var sizeOfLoad = 0;
-    if (customLoad)
+    if (customLoad) {
         maxLoad = customLoad;
+    }
+
     while(totalSize > 0 && sizeOfLoad < maxLoad && files.length > 0) {
+        console.log("MMM: totalSize: ", totalSize, "sizeOfLoad:", sizeOfLoad, "load:", load.length, "files:", files.length);
         var sizeOfFile = size.pop();
         sizeOfLoad += sizeOfFile;
         load.push(files.pop());
         totalSize -= sizeOfFile;
     }
-    return load;
+
+    var response = {
+        "files" : files,
+        "size" : size,
+        "totalSize": totalSize,
+        "load": load
+    }
+    return response;
 }
 
-function constructGraph() {
+function constructGraph(files, size, totalSize) {
     //add all mappers that should be the dependencies for the reducer
     var depForReducer = [];
 
@@ -72,12 +91,14 @@ function constructGraph() {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
             console.log("total size predivision  is ", totalSize, " and has type", typeof totalSize);
-            totalSize = totalSize/2.0;
+            //totalSize = totalSize/2.0;
+            //totalSize --;
             console.log("total size postdivision is ", totalSize, " and has type", typeof totalSize);
-            while (totalSize >= 0) {
+            while (totalSize > 0) {
                 console.log("------------total size at the beginning ", totalSize);
-                var ld = createLoadForTask(files, size);
-                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld));
+                var ld = createLoadForTask(files, size, totalSize);
+                totalSize = ld["totalSize"];
+                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"]));
                 depForReducer.push("mapper_" + i);
                 i++;
             }
@@ -100,9 +121,11 @@ function queryForSpecificFiles(url, filter) {
         .end(function(res){
             if (res.ok) {
                 var result = JSON.parse(JSON.stringify(res.body));
-                parseIndexDBResponse(result);
-                console.log("total size of files is ", totalSize);
-                constructGraph();
+                var resp = parseIndexDBResponse(result);
+                //files = resp["files"];
+                //size = resp["size"];
+                //console.log("total size of files is ", totalSize);
+                constructGraph(resp["files"], resp["size"], resp["totalSize"]);
                 //post a taskGraph
                 // postGraph(taskClusterCreateGraphUrl, graphSkeleton);
             } else {
