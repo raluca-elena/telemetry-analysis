@@ -7,7 +7,7 @@ var task = {
         "provisionerId":    "aws-provisioner",
         "workerType":       "test-r3-xlarge",
         "routing":          "",
-        "timeout":          2400,
+        "timeout":          1200,
         "retries":          3,
         "priority":         5,
         "created": new Date().toISOString(),
