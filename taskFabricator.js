@@ -5,9 +5,9 @@ var task = {
     "task": {
         "version":          "0.2.0",
         "provisionerId":    "aws-provisioner",
-        "workerType":       "raluca",
+        "workerType":       "test-r3-xlarge",
         "routing":          "",
-        "timeout":          600,
+        "timeout":          2400,
         "retries":          3,
         "priority":         5,
         "created": new Date().toISOString(),
@@ -26,7 +26,7 @@ var task = {
                 'passwd.txt':         '/etc/passwd',
                 'result': '/home/worker/result.txt'
             },
-            "maxRunTime":     600
+            "maxRunTime":     2400
         },
         "metadata": {
             "name":           "Exec mapper `'Blue Sky'` ",

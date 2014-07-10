@@ -2,8 +2,8 @@
     "private":  true,
     "dependencies": {
         "taskcluster-client":               "0.5.1",
-        "superagent":               "0.18.0",
-        "aws-sdk": "2.0.4"
+                "superagent":               "0.18.0",
+                   "aws-sdk":               "2.0.4"
     },
     "engines": {
         "node":                             "0.10.x"

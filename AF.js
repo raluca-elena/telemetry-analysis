@@ -54,19 +54,21 @@ function parseIndexDBResponse(response) {
 }
 
 function createLoadForTask(files, size, totalSize, customLoad) {
-    var maxLoad = 1024 * 1024 * 1024;
+    var maxLoad = 1024 * 1024 * 100;
+    //var maxLoad = 1024*1024;
     var load = [];
     var sizeOfLoad = 0;
     if (customLoad) {
         maxLoad = customLoad;
     }
 
-    while(totalSize > 0 && sizeOfLoad < maxLoad && files.length > 0) {
+    while(totalSize > 0 && sizeOfLoad < maxLoad && files.length > 0 && load.length < 50) {
         var sizeOfFile = size.pop();
         sizeOfLoad += sizeOfFile;
         load.push(files.pop());
         totalSize -= sizeOfFile;
     }
+    console.log("SIZE OF LOAD--", sizeOfLoad);
 
     var response = {
         "files" : files,
@@ -74,7 +76,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         "totalSize": totalSize,
         "load": load
     }
-    console.log("LOAD is ", load);
+    console.log("LOAD is ", load, "number of files", load.length);
     return response;
 }
 
@@ -87,7 +89,7 @@ function constructGraph(files, size, totalSize) {
         if (key === "tasks") {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
-            while (totalSize > 0) {
+            while (totalSize > 0 && i < 16) {
                 var ld = createLoadForTask(files, size, totalSize);
                 totalSize = ld["totalSize"];
                 graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar));
