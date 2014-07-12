@@ -48,21 +48,20 @@ var decrypted_str = CryptoJS.enc.Utf8.stringify(decrypted);
 assert.equal(message, decrypted_str);
 
 exports.encryptData = function encryptData(data){
-
-    var r_pass = crypto.randomBytes(128);
-    var r_pass_base64 = r_pass.toString("base64");
-    var encrypted_credentials = CryptoJS.AES.encrypt(data, r_pass_base64, { format: JsonFormatter });
-    var encrypted_pass = key.encrypt(r_pass_base64, fixture.BASE64, fixture.BASE64);
+    var symmetricKey = crypto.randomBytes(128);
+    var symmetricKeyB64 = symmetricKey.toString("base64");
+    var encryptedCredentials = CryptoJS.AES.encrypt(data, symmetricKeyB64, { format: JsonFormatter });
+    var encryptedSymmetricKey = key.encrypt(symmetricKeyB64, fixture.BASE64, fixture.BASE64);
     var response = {};
-    response["credentials"] = encrypted_credentials;
-    response["simmetrycKey"] = encrypted_pass;
+    response["credentials"] = encryptedCredentials.toString();
+    response["simmetrycKey"] = encryptedSymmetricKey;
     return response;
 };
 
 exports.decryptData = function decryptData(data){
-    var simKey = data["simmetrycKey"];
+    var symmetricKey = data["simmetrycKey"];
     var credentials = data["credentials"];
-    var decriptedsimKey = privKey.decrypt(simKey, fixture.BASE64, fixture.BASE64);
+    var decriptedsimKey = privKey.decrypt(symmetricKey, fixture.BASE64, fixture.BASE64);
     var credentials = CryptoJS.AES.decrypt(credentials, decriptedsimKey, { format: JsonFormatter });
     return CryptoJS.enc.Utf8.stringify(credentials);
 };

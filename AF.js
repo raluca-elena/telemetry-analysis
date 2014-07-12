@@ -3,8 +3,8 @@ var request = require('superagent');
 var myFakeServ = "http://localhost:8080/files";
 var taskClusterCreateGraphUrl = 'http://scheduler.taskcluster.net/v1/task-graph/create';
 var gskeleton = require('./GraphSkeleton');
+var credentialsProvider = require('./getFederationToken');
 var fs = require('fs');
-
 graphSkeleton = gskeleton.graphSkeleton;
 taskModule =  require('./taskFabricator');
 
@@ -16,6 +16,7 @@ argv.shift();
 var file = argv[0];
 var image = argv[1];
 var envVar = argv[2] ? JSON.parse(argv[2]) : {};
+//credentials.provideCredentials(createGraph);
 
 //give me env variables
 var data = fs.readFileSync(file, 'utf8')
@@ -68,7 +69,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         load.push(files.pop());
         totalSize -= sizeOfFile;
     }
-    console.log("SIZE OF LOAD--", sizeOfLoad);
+    //console.log("SIZE OF LOAD--", sizeOfLoad);
 
     var response = {
         "files" : files,
@@ -76,12 +77,12 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         "totalSize": totalSize,
         "load": load
     }
-    console.log("LOAD is ", load, "number of files", load.length);
+    //console.log("LOAD is ", load, "number of files", load.length);
     return response;
 }
 
-function constructGraph(files, size, totalSize) {
-    //add all mappers that should be the dependencies for the reducer
+function constructGraph(files, size, totalSize, credentials) {
+    //add all mappers, the dependencies for the reducer
     var depForReducer = [];
 
     //add tasks to taskGraph
@@ -89,10 +90,10 @@ function constructGraph(files, size, totalSize) {
         if (key === "tasks") {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
-            while (totalSize > 0 && i < 16) {
+            while (totalSize > 0 && i < 2) {
                 var ld = createLoadForTask(files, size, totalSize);
                 totalSize = ld["totalSize"];
-                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar));
+                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar, credentials));
                 depForReducer.push("mapper_" + i);
                 i++;
             }
@@ -101,12 +102,12 @@ function constructGraph(files, size, totalSize) {
     var env = getMapperTasksIdsAsEnv(depForReducer);
     for (key in graphSkeleton) {
         if (key === "tasks") {
-            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', 'I am a reducer B)'], env));
+            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', '$CREDENTIALS'], env, credentials));
         }
     }
 }
 
-function queryForSpecificFiles(url, filter) {
+function queryForSpecificFiles(url, filter, credentials) {
     request
         .post(url)
         .send(filter)
@@ -115,7 +116,7 @@ function queryForSpecificFiles(url, filter) {
             if (res.ok) {
                 var result = JSON.parse(JSON.stringify(res.body));
                 var resp = parseIndexDBResponse(result);
-                constructGraph(resp["files"], resp["size"], resp["totalSize"]);
+                constructGraph(resp["files"], resp["size"], resp["totalSize"], credentials);
 
                 //post a taskGraph
                 postGraph(taskClusterCreateGraphUrl, graphSkeleton);
@@ -133,7 +134,7 @@ function postGraph(url, graphToPost) {
             if (res.ok) {
                 console.log(JSON.stringify(res.body));
                 var graph = "http://docs.taskcluster.net/tools/task-graph-inspector/#";
-                console.log(graph + res.body.status.taskGraphId)
+                console.log(graph + res.body.status.taskGraphId);
 
                 //make requests for status
                 var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
@@ -154,5 +155,10 @@ function postGraph(url, graphToPost) {
             }
         });
 }
-queryForSpecificFiles(myFakeServ, filter);
 
+function AF(credentials) {
+    var base = new Buffer(JSON.stringify(credentials));
+    var encodedCredentials = base.toString('base64');
+    queryForSpecificFiles(myFakeServ, filter, encodedCredentials);
+}
+credentialsProvider.provideCredentials(AF);

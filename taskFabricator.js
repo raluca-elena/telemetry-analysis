@@ -40,7 +40,7 @@ var task = {
     }
 };
 
-exports.fabricateIndependentTask = function (label, image, load, env) {
+exports.fabricateIndependentTask = function (label, image, load, env, credentials) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
     if (image) {
@@ -52,10 +52,13 @@ exports.fabricateIndependentTask = function (label, image, load, env) {
     if (env) {
         newTask['task']['payload']['env'] = env;
     }
+    if (credentials) {
+        newTask['task']['payload']['env']['CREDENTIALS'] = credentials;
+    }
     return newTask;
 }
 
-exports.fabricateDependentTask = function (label, dependencies, command, env) {
+exports.fabricateDependentTask = function (label, dependencies, command, env, credentials) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
     newTask['requires'] = dependencies;
@@ -64,6 +67,9 @@ exports.fabricateDependentTask = function (label, dependencies, command, env) {
     }
     if (env) {
         newTask['task']['payload']['env'] = env;
+    }
+    if (credentials) {
+        newTask['task']['payload']['env']['CREDENTIALS'] = credentials;
     }
     return newTask;
 }

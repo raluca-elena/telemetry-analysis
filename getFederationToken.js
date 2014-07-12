@@ -31,14 +31,16 @@ var configTemplate = {
     "region": "us-east-1"
 }
 
-sts.getFederationToken(params, function(err, data) {
-    if (err) console.log(err, err.stack); // an error occurred
-    else  {
-        configTemplate["accessKeyId"] = data["Credentials"]["AccessKeyId"];
-        configTemplate["secretAccessKey"] = data["Credentials"]["SecretAccessKey"];
-        configTemplate["sessionToken"] = data["Credentials"]["SessionToken"];
-        var credentials = JSON.stringify(configTemplate)
-        return encrypt.encryptData(credentials);
-    }
-});
 
+exports.provideCredentials = function(cb){
+    sts.getFederationToken(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else  {
+            configTemplate["accessKeyId"] = data["Credentials"]["AccessKeyId"];
+            configTemplate["secretAccessKey"] = data["Credentials"]["SecretAccessKey"];
+            configTemplate["sessionToken"] = data["Credentials"]["SessionToken"];
+            var credentials = JSON.stringify(configTemplate);
+            cb(encrypt.encryptData(credentials));
+        }
+    });
+}
