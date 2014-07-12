@@ -1,4 +1,5 @@
 var aws = require('aws-sdk');
+var encrypt = require('./encryption');
 aws.config.loadFromPath('config1.json');
 var sts = new aws.STS();
 var policy = {
@@ -21,7 +22,23 @@ var params = {
     DurationSeconds: 129600,
     Policy: JSON.stringify(policy)
 };
+
+//STS credentials accepted format
+var configTemplate = {
+    "accessKeyId": "",
+    "secretAccessKey": "",
+    "sessionToken":"",
+    "region": "us-east-1"
+}
+
 sts.getFederationToken(params, function(err, data) {
     if (err) console.log(err, err.stack); // an error occurred
-    else     console.log(data);           // successful response
+    else  {
+        configTemplate["accessKeyId"] = data["Credentials"]["AccessKeyId"];
+        configTemplate["secretAccessKey"] = data["Credentials"]["SecretAccessKey"];
+        configTemplate["sessionToken"] = data["Credentials"]["SessionToken"];
+        var credentials = JSON.stringify(configTemplate)
+        return encrypt.encryptData(credentials);
+    }
 });
+
