@@ -73,8 +73,3 @@ exports.fabricateDependentTask = function (label, dependencies, command, env, cr
     }
     return newTask;
 }
-
-//get image and...
-//create credentials
-//insert credentials as env var to image
-//insert credentials to image
