@@ -54,14 +54,16 @@ exports.encryptData = function encryptData(data){
     var encryptedSymmetricKey = key.encrypt(symmetricKeyB64, fixture.BASE64, fixture.BASE64);
     var response = {};
     response["credentials"] = encryptedCredentials.toString();
-    response["simmetrycKey"] = encryptedSymmetricKey;
+    response["symmetricKey"] = encryptedSymmetricKey;
     return response;
 };
 
+
 exports.decryptData = function decryptData(data){
-    var symmetricKey = data["simmetrycKey"];
-    var credentials = data["credentials"];
-    var decriptedsimKey = privKey.decrypt(symmetricKey, fixture.BASE64, fixture.BASE64);
-    var credentials = CryptoJS.AES.decrypt(credentials, decriptedsimKey, { format: JsonFormatter });
+    var encryptedCredentials = JSON.parse(data);
+    var symmetricKey = encryptedCredentials["symmetricKey"];
+    var credentials = encryptedCredentials["credentials"];
+    var decriptedSymmKey = privKey.decrypt(symmetricKey, fixture.BASE64, fixture.BASE64);
+    var credentials = CryptoJS.AES.decrypt(credentials, decriptedSymmKey, { format: JsonFormatter });
     return CryptoJS.enc.Utf8.stringify(credentials);
 };
