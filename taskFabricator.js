@@ -13,7 +13,7 @@ var task = {
         "created": new Date().toISOString(),
         "deadline": new Date(+new Date + 12096e5).toISOString(),
         "payload": {
-            "image":          'registry.taskcluster.net/ralu',
+            "image":          'registry.taskcluster.net/lulu',
             "command": [
                 'node', '/opt/analysis-tools/downloader.js',
             ],
