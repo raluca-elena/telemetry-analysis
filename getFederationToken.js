@@ -31,7 +31,6 @@ var configTemplate = {
     "region": "us-east-1"
 }
 
-
 exports.provideCredentials = function(cb){
     sts.getFederationToken(params, function(err, data) {
         if (err) console.log(err, err.stack); // an error occurred

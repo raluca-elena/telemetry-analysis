@@ -55,7 +55,7 @@ function parseIndexDBResponse(response) {
 }
 
 function createLoadForTask(files, size, totalSize, customLoad) {
-    var maxLoad = 1024 * 1024 * 100;
+    var maxLoad = 1024 * 1024;
     //var maxLoad = 1024*1024;
     var load = [];
     var sizeOfLoad = 0;
@@ -69,7 +69,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         load.push(files.pop());
         totalSize -= sizeOfFile;
     }
-    //console.log("SIZE OF LOAD--", sizeOfLoad);
+    console.log("SIZE OF LOAD--", sizeOfLoad);
 
     var response = {
         "files" : files,
@@ -77,7 +77,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         "totalSize": totalSize,
         "load": load
     }
-    //console.log("LOAD is ", load, "number of files", load.length);
+    console.log("LOAD is ", load, "number of files", load.length);
     return response;
 }
 
@@ -99,10 +99,9 @@ function constructGraph(files, size, totalSize, credentials) {
             }
         }
     }
-    var env = getMapperTasksIdsAsEnv(depForReducer);
     for (key in graphSkeleton) {
         if (key === "tasks") {
-            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['echo', '$CREDENTIALS'], env, credentials));
+            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['node', '/opt/analysis-tools/reducer.js'], envVar, credentials));
         }
     }
 }
@@ -159,6 +158,8 @@ function postGraph(url, graphToPost) {
 function AF(credentials) {
     var base = new Buffer(JSON.stringify(credentials));
     var encodedCredentials = base.toString('base64');
+
+
     queryForSpecificFiles(myFakeServ, filter, encodedCredentials);
 }
 credentialsProvider.provideCredentials(AF);

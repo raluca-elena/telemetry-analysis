@@ -13,11 +13,13 @@ var task = {
         "created": new Date().toISOString(),
         "deadline": new Date(+new Date + 12096e5).toISOString(),
         "payload": {
-            "image":          'registry.taskcluster.net/lulu',
+            "image":          'registry.taskcluster.net/micu',
             "command": [
-                'node', '/opt/analysis-tools/downloader.js',
+                'node', '/opt/analysis-tools/mapper.js',
             ],
-            env: {},
+            env: {
+
+            },
             "features": {
                 "azureLivelog": true
             },
@@ -40,6 +42,15 @@ var task = {
     }
 };
 
+function getMapperTasksIdsAsEnv(labels) {
+    var str = "";
+    for (var i = 0; i < labels.length -1; i++)
+        str = str.concat("{{taskId:"+labels[i]+"}} ");
+    str = str.concat("{{taskId:"+labels[labels.length-1]+"}}");
+    return str;
+}
+
+
 exports.fabricateIndependentTask = function (label, image, load, env, credentials) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
@@ -50,7 +61,8 @@ exports.fabricateIndependentTask = function (label, image, load, env, credential
         newTask['task']['payload']['command'] = newTask['task']['payload']['command'].concat(load);
     }
     if (env) {
-        newTask['task']['payload']['env'] = env;
+        var cloneEnv = JSON.parse(JSON.stringify(env));
+        newTask['task']['payload']['env'] = cloneEnv;
     }
     if (credentials) {
         newTask['task']['payload']['env']['CREDENTIALS'] = credentials;
@@ -59,6 +71,7 @@ exports.fabricateIndependentTask = function (label, image, load, env, credential
 }
 
 exports.fabricateDependentTask = function (label, dependencies, command, env, credentials) {
+    var dep = getMapperTasksIdsAsEnv(dependencies);
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
     newTask['requires'] = dependencies;
@@ -66,7 +79,11 @@ exports.fabricateDependentTask = function (label, dependencies, command, env, cr
         newTask['task']['payload']['command'] = command;
     }
     if (env) {
-        newTask['task']['payload']['env'] = env;
+        var cloneEnv = JSON.parse(JSON.stringify(env));
+        newTask['task']['payload']['env'] = cloneEnv;
+        newTask['task']['payload']['env']['REDUCER_ID'] = "{{taskId:reducer}}";
+        newTask['task']['payload']['env']['INPUT_TASK_IDS'] = dep;
+
     }
     if (credentials) {
         newTask['task']['payload']['env']['CREDENTIALS'] = credentials;
