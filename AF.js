@@ -8,7 +8,7 @@
  * step2: encrypt with public key credentials and provide b64 encrypted credentials as CREDENTIALS env var
  * step3: query usinf Filter.json(taken as arg) to indexDB to get the specific file names and sizes of files
  * step4: create skeleton for mapper tasks and add load to them (file names from indexDB)
- * step5: push taskDefinition to GraphSkeleton
+ * step5: push taskDefinition to graphSkeleton
  * step6: create reduce task and give it as dependencies the labels of dependent tasks
  * step7: post graph
  * step8: get taskGraph definition
@@ -26,7 +26,7 @@ var myFakeServ = "http://localhost:8080/files";
 var taskClusterCreateGraphUrl = 'http://scheduler.taskcluster.net/v1/task-graph/create';
 
 //load graph skeleton
-var gskeleton = require('./GraphSkeleton');
+var gskeleton = require('./graphSkeleton');
 
 //load module for federatedToken request
 var credentialsProvider = require('./getFederationToken');

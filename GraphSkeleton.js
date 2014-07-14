@@ -1,3 +1,8 @@
+/**
+ * graphSkeleton.js functionality:
+ *
+ * exports graph structure
+ */
 exports.graphSkeleton = {
     "version":                "0.2.0",
     "params":                 {
