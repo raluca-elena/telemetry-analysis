@@ -13,7 +13,7 @@ var task = {
         "created": new Date().toISOString(),
         "deadline": new Date(+new Date + 12096e5).toISOString(),
         "payload": {
-            "image":          'registry.taskcluster.net/micu',
+            "image":          'registry.taskcluster.net/aaa',
             "command": [
                 'node', '/opt/analysis-tools/mapper.js',
             ],

@@ -1,13 +1,6 @@
 /**
- * Created by rpodiuc on 7/14/14.
- */
-/**
- * Created by rpodiuc on 7/10/14.
- */
-/**
  * Created by rpodiuc on 7/9/14.
  */
-
 var url = "http://scheduler.taskcluster.net/v1/task-graph/cSdoUlWPTcmx5Ka2gbucVQ/inspect";
 function constructUrl() {
     var pageUrl = window.location['href'];
@@ -44,7 +37,7 @@ function makeRecursiveRequest(url) {
         console.log(data);
         //this is a miserable hack
         if (Object.keys(listOfTasks).length === 0) {
-            console.log("------------------------I DID IT!");
+            console.log("-----------TASK GRAPH FINISHED CLOSE LOOP !");
             return;
         }
         for (var key in data["tasks"]) {

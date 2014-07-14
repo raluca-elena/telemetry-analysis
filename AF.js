@@ -90,7 +90,7 @@ function constructGraph(files, size, totalSize, credentials) {
         if (key === "tasks") {
             //spawn as many tasks as needed using the size of the files and a maximum dimension per task
             var i = 0;
-            while (totalSize > 0 && i < 2) {
+            while (totalSize > 0 && i < 5) {
                 var ld = createLoadForTask(files, size, totalSize);
                 totalSize = ld["totalSize"];
                 graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar, credentials));
@@ -138,6 +138,7 @@ function postGraph(url, graphToPost) {
                 //make requests for status
                 var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
                 console.log(inspectUrl);
+                console.log("Monitor taskGraph  here V_V  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
 
                 request
                     .get(inspectUrl)
