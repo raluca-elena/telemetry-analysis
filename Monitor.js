@@ -1,7 +1,10 @@
 /**
- * Created by rpodiuc on 7/9/14.
+ * Monitor.js functionality:
+ * Simple loop that queries for changes in taskGraph json response. When all tasks finish stops.
  */
+
 var url = "http://scheduler.taskcluster.net/v1/task-graph/cSdoUlWPTcmx5Ka2gbucVQ/inspect";
+
 function constructUrl() {
     var pageUrl = window.location['href'];
     console.log("MY LOCATION IS ", pageUrl);
@@ -10,7 +13,9 @@ function constructUrl() {
     url = "http://scheduler.taskcluster.net/v1/task-graph/" + taskID + "/inspect";
 }
 constructUrl();
+
 var listOfTasks = {};
+
 function isEmpty(obj) {
     for(var key in obj) {
         if(obj.hasOwnProperty(key))
@@ -18,6 +23,8 @@ function isEmpty(obj) {
     }
     return true;
 }
+
+//add tasks to page
 function createPage(url){
     $.get( url, function parseResponse(data) {
         console.log(data);
@@ -32,12 +39,13 @@ function createPage(url){
     });
 }
 createPage(url);
+
+//check for updates and if all tasks ended exit from loop
 function makeRecursiveRequest(url) {
     $.get( url, function parseResponse(data) {
         console.log(data);
-        //this is a miserable hack
         if (Object.keys(listOfTasks).length === 0) {
-            console.log("-----------TASK GRAPH FINISHED CLOSE LOOP !");
+            console.log("-----------TASK GRAPH FINISHED CLOSE LOOP !-----------------");
             return;
         }
         for (var key in data["tasks"]) {
@@ -49,7 +57,6 @@ function makeRecursiveRequest(url) {
                         href: "http://docs.taskcluster.net/tools/task-inspector/#" + data["tasks"][key]['taskId']
                     }).appendTo('#'+ key);
                     var resultUrl = data["tasks"][key]["resolution"]["resultUrl"];
-                    console.log("this is my castle!");
                     delete(listOfTasks[key]);
                 }
 
@@ -59,6 +66,7 @@ function makeRecursiveRequest(url) {
         makeRecursiveRequest(url);
     });
 }
+
 setTimeout(function() {
     makeRecursiveRequest(url);
 }, 4000);
