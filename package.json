@@ -7,9 +7,10 @@
                       "ursa":               "0.8.0",
          "node-cryptojs-aes":               "0.4.0",
                     "crypto":               "0.0.3",
-                    "assert":               "1.1.1"
-
-        "engines": {
-        "node":                             "0.10.x"
+                    "assert":               "1.1.1",
+                "nodemailer":               "0.7.1"
+    },
+    "engines": {
+                      "node":               "0.10.x"
     }
 }
