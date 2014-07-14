@@ -1,3 +1,10 @@
+/**
+ * getFederationToken.js functionality:
+ *
+ * step1: makes calls to S3 with local user credentials with specific policy
+ * step2: plugs credentials in required format
+ * step3: calls encryption on credentials
+ */
 var aws = require('aws-sdk');
 var encrypt = require('./encryption');
 aws.config.loadFromPath('config1.json');
