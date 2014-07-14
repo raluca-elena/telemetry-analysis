@@ -1,36 +1,61 @@
 #!/usr/bin/env node
+/**
+ * AF.js functionality:
+ * ex : ./AF.js Filter.json "registry.taskcluster.net/aaa" '{"OWNER" : "ralucaelena1985@gmail.com", "BLACK" : "black"}'
+ *       script   filter            dockerImage                        { env_var : value, env_var : value}
+ *
+ * step1: make call for federatedToken
+ * step2: encrypt with public key credentials and provide b64 encrypted credentials as CREDENTIALS env var
+ * step3: query usinf Filter.json(taken as arg) to indexDB to get the specific file names and sizes of files
+ * step4: create skeleton for mapper tasks and add load to them (file names from indexDB)
+ * step5: push taskDefinition to GraphSkeleton
+ * step6: create reduce task and give it as dependencies the labels of dependent tasks
+ * step7: post graph
+ * step8: get taskGraph definition
+ * step9: print definition of graph and link to a simple monitor page
+ *
+ * NOTE: the paths commented are the ones on the local machine/repo and the ones uncommented are the ones in docker
+ *       image
+ */
 var request = require('superagent');
+
+//this should be the db endpoint
 var myFakeServ = "http://localhost:8080/files";
+
+//post graph to this endpoint
 var taskClusterCreateGraphUrl = 'http://scheduler.taskcluster.net/v1/task-graph/create';
+
+//load graph skeleton
 var gskeleton = require('./GraphSkeleton');
+
+//load module for federatedToken request
 var credentialsProvider = require('./getFederationToken');
 var fs = require('fs');
-graphSkeleton = gskeleton.graphSkeleton;
-taskModule =  require('./taskFabricator');
 
+var graphSkeleton = gskeleton.graphSkeleton;
+var taskModule =  require('./taskFabricator');
+
+//get arguments
 var argv = process.argv;
 
 //drop node and name of script, should be replaced with some commander.js call
 argv.shift();
 argv.shift();
-var file = argv[0];
-var image = argv[1];
-var envVar = argv[2] ? JSON.parse(argv[2]) : {};
-//credentials.provideCredentials(createGraph);
 
-//give me env variables
+//Filter.json
+var file = argv[0];
 var data = fs.readFileSync(file, 'utf8')
 data = JSON.parse(data);
 var filter = {"filter": data};
-var result;
-function getMapperTasksIdsAsEnv(labels) {
-    var str = "";
-    for (var i = 0; i < labels.length -1; i++)
-        str = str.concat("{{taskId:"+labels[i]+"}} ");
-    str = str.concat("{{taskId:"+labels[labels.length-1]+"}}");
-    return {"INPUT_TASK_IDS": str};
-}
 
+//dockerImage
+var image = argv[1];
+
+//env vars for tasks
+var envVar = argv[2] ? JSON.parse(argv[2]) : {};
+var result;
+
+//parse response given by indexDB of form [{file_name=filename size=xxx}]
 function parseIndexDBResponse(response) {
     var files = [];
     var size = [];
@@ -54,9 +79,9 @@ function parseIndexDBResponse(response) {
     return response;
 }
 
+//each task gets a load aka a list of files
 function createLoadForTask(files, size, totalSize, customLoad) {
     var maxLoad = 1024 * 1024;
-    //var maxLoad = 1024*1024;
     var load = [];
     var sizeOfLoad = 0;
     if (customLoad) {
@@ -69,7 +94,7 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         load.push(files.pop());
         totalSize -= sizeOfFile;
     }
-    console.log("SIZE OF LOAD--", sizeOfLoad);
+    //console.log("load size for task--", sizeOfLoad);
 
     var response = {
         "files" : files,
@@ -77,12 +102,12 @@ function createLoadForTask(files, size, totalSize, customLoad) {
         "totalSize": totalSize,
         "load": load
     }
-    console.log("LOAD is ", load, "number of files", load.length);
+    //console.log("load is ", load, "number of files", load.length);
     return response;
 }
 
 function constructGraph(files, size, totalSize, credentials) {
-    //add all mappers, the dependencies for the reducer
+    //add all mapper labels, the dependencies for the reducer
     var depForReducer = [];
 
     //add tasks to taskGraph
@@ -106,7 +131,8 @@ function constructGraph(files, size, totalSize, credentials) {
     }
 }
 
-function queryForSpecificFiles(url, filter, credentials) {
+//query indexDB for file names and sizes
+function queryIndexDB(url, filter, credentials) {
     request
         .post(url)
         .send(filter)
@@ -138,7 +164,7 @@ function postGraph(url, graphToPost) {
                 //make requests for status
                 var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
                 console.log(inspectUrl);
-                console.log("Monitor taskGraph  here V_V  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
+                console.log("Monitor your taskGraph  here ^_^  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
 
                 request
                     .get(inspectUrl)
@@ -159,8 +185,6 @@ function postGraph(url, graphToPost) {
 function AF(credentials) {
     var base = new Buffer(JSON.stringify(credentials));
     var encodedCredentials = base.toString('base64');
-
-
-    queryForSpecificFiles(myFakeServ, filter, encodedCredentials);
+    queryIndexDB(myFakeServ, filter, encodedCredentials);
 }
 credentialsProvider.provideCredentials(AF);
