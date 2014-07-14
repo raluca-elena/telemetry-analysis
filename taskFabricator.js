@@ -1,3 +1,8 @@
+/**
+ * taskFabricator.js functionality:
+ *
+ * step1: given the task skeleton plugs attributes and returns new task object
+ */
 var task = {
     "label":              "customLabel",
     "requires":           [],
@@ -42,6 +47,7 @@ var task = {
     }
 };
 
+//concatenate all taskIds as one env var for the reducer task
 function getMapperTasksIdsAsEnv(labels) {
     var str = "";
     for (var i = 0; i < labels.length -1; i++)
@@ -50,7 +56,7 @@ function getMapperTasksIdsAsEnv(labels) {
     return str;
 }
 
-
+//mapper task
 exports.fabricateIndependentTask = function (label, image, load, env, credentials) {
     var newTask = JSON.parse(JSON.stringify(task));
     newTask['label'] = label;
@@ -70,6 +76,7 @@ exports.fabricateIndependentTask = function (label, image, load, env, credential
     return newTask;
 }
 
+//reducer task
 exports.fabricateDependentTask = function (label, dependencies, command, env, credentials) {
     var dep = getMapperTasksIdsAsEnv(dependencies);
     var newTask = JSON.parse(JSON.stringify(task));
@@ -83,7 +90,6 @@ exports.fabricateDependentTask = function (label, dependencies, command, env, cr
         newTask['task']['payload']['env'] = cloneEnv;
         newTask['task']['payload']['env']['REDUCER_ID'] = "{{taskId:reducer}}";
         newTask['task']['payload']['env']['INPUT_TASK_IDS'] = dep;
-
     }
     if (credentials) {
         newTask['task']['payload']['env']['CREDENTIALS'] = credentials;
