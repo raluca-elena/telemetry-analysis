@@ -111,24 +111,18 @@ function constructGraph(files, size, totalSize, credentials) {
     var depForReducer = [];
 
     //add tasks to taskGraph
-    for (var key in graphSkeleton) {
-        if (key === "tasks") {
-            //spawn as many tasks as needed using the size of the files and a maximum dimension per task
-            var i = 0;
-            while (totalSize > 0 && i < 5) {
-                var ld = createLoadForTask(files, size, totalSize);
-                totalSize = ld["totalSize"];
-                graphSkeleton[key].push(taskModule.fabricateIndependentTask( "mapper_" + i, image, ld["load"], envVar, credentials));
-                depForReducer.push("mapper_" + i);
-                i++;
-            }
-        }
+    //spawn as many tasks as needed using the size of the files and a maximum dimension per task
+    var i = 0;
+    while (totalSize > 0 && i < 5) {
+        var ld = createLoadForTask(files, size, totalSize);
+        totalSize = ld.totalSize;
+        var label = "mapper_" + i
+        graphSkeleton.tasks.push(taskModule.fabricateIndependentTask(label, image, ld.load, envVar, credentials));
+        depForReducer.push(label);
+        i++;
     }
-    for (key in graphSkeleton) {
-        if (key === "tasks") {
-            graphSkeleton[key].push(taskModule.fabricateDependentTask('reducer', depForReducer, ['node', '/opt/analysis-tools/reducer.js'], envVar, credentials));
-        }
-    }
+
+    graphSkeleton.tasks.push(taskModule.fabricateDependentTask('reducer', depForReducer, ['node', '/opt/analysis-tools/reducer.js'], envVar, credentials));
 }
 
 //query indexDB for file names and sizes
@@ -138,16 +132,17 @@ function queryIndexDB(url, filter, credentials) {
         .send(filter)
         .set('Accept', 'application/json')
         .end(function(res){
-            if (res.ok) {
-                var result = JSON.parse(JSON.stringify(res.body));
-                var resp = parseIndexDBResponse(result);
-                constructGraph(resp["files"], resp["size"], resp["totalSize"], credentials);
-
-                //post a taskGraph
-                postGraph(taskClusterCreateGraphUrl, graphSkeleton);
-            } else {
+            if (!res.ok) {
                 console.log('Oh no! error ' + res.text);
+                return;
             }
+            var result = JSON.parse(JSON.stringify(res.body));
+            var resp = parseIndexDBResponse(result);
+            constructGraph(resp.files, resp.size, resp.totalSize, credentials);
+
+            //post a taskGraph
+            postGraph(taskClusterCreateGraphUrl, graphSkeleton);
+
         });
 }
 
@@ -156,29 +151,28 @@ function postGraph(url, graphToPost) {
         .post(url)
         .send(graphToPost)
         .end(function (res) {
-            if (res.ok) {
-                console.log(JSON.stringify(res.body));
-                var graph = "http://docs.taskcluster.net/tools/task-graph-inspector/#";
-                console.log(graph + res.body.status.taskGraphId);
-
-                //make requests for status
-                var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
-                console.log(inspectUrl);
-                console.log("Monitor your taskGraph  here ^_^  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
-
-                request
-                    .get(inspectUrl)
-                    .end(function (res) {
-                        console.log(res.body['tasks']);
-                        var resultBody = res.body['tasks'];
-                        for (var j  in resultBody) {
-                            console.log("mapper id ", resultBody[j]['taskId']);
-                        }
-                    });
-
-            } else {
+            if (!res.ok) {
                 console.log('Oh no! error ' + res.text);
+                return;
             }
+            console.log(JSON.stringify(res.body));
+            var graph = "http://docs.taskcluster.net/tools/task-graph-inspector/#";
+            console.log(graph + res.body.status.taskGraphId);
+
+            //make requests for status
+            var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
+            console.log(inspectUrl);
+            console.log("Monitor your taskGraph  here ^_^  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
+
+            request
+                .get(inspectUrl)
+                .end(function (res) {
+                    console.log(res.body.tasks);
+                    var resultBody = res.body.tasks;
+                    for (var j  in resultBody) {
+                        console.log("mapper id ", resultBody[j]['taskId']);
+                    }
+                });
         });
 }
 
