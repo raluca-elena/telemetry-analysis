@@ -8,7 +8,8 @@ var url = "http://scheduler.taskcluster.net/v1/task-graph/cSdoUlWPTcmx5Ka2gbucVQ
 function constructUrl() {
     var pageUrl = window.location['href'];
     console.log("MY LOCATION IS ", pageUrl);
-    var taskID = pageUrl.split("?")[1];
+    var param = pageUrl.split("?")[1]
+    var taskID = param.split("=")[1];
     console.log("taskId is ", taskID);
     url = "http://scheduler.taskcluster.net/v1/task-graph/" + taskID + "/inspect";
 }
@@ -25,8 +26,8 @@ function isEmpty(obj) {
 }
 
 //add tasks to page
-function createPage(url){
-    $.get( url, function parseResponse(data) {
+function createPage(){
+    $.get(url, function parseResponse(data) {
         console.log(data);
         var list = [];
         for (var key in data["tasks"]) {
@@ -34,14 +35,14 @@ function createPage(url){
             console.log("KEY IS", key);
             listOfTasks[key] = true;
             var x = $('<div id="' + key + '"></ div>').text(key);
-            $('#unicorn').append(x);
+            $('#paragraph').append(x);
+            setInterval(makeRecursiveRequest, 5000);
         }
     });
 }
-createPage(url);
 
 //check for updates and if all tasks ended exit from loop
-function makeRecursiveRequest(url) {
+function makeRecursiveRequest() {
     $.get( url, function parseResponse(data) {
         console.log(data);
         if (Object.keys(listOfTasks).length === 0) {
@@ -63,14 +64,10 @@ function makeRecursiveRequest(url) {
             }
         }
 
-        makeRecursiveRequest(url);
+        setInterval(makeRecursiveRequest, 5000);
     });
 }
-
-setTimeout(function() {
-    makeRecursiveRequest(url);
-}, 4000);
-
+createPage(url);
 
 
 

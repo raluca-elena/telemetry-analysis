@@ -162,7 +162,7 @@ function postGraph(url, graphToPost) {
             //make requests for status
             var inspectUrl = "http://scheduler.taskcluster.net/v1/task-graph/" + res.body.status.taskGraphId + "/inspect";
             console.log(inspectUrl);
-            console.log("Monitor your taskGraph  here ^_^  " + "http://localhost:63342/telemetry-analysis/index.html" + "?" + res.body.status.taskGraphId);
+            console.log("Monitor your taskGraph  here ^_^  " + "http://raluca-elena.github.io/telemetry-analysis/" + "?" + "graphId=" + res.body.status.taskGraphId);
 
             request
                 .get(inspectUrl)
