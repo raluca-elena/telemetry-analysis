@@ -8,7 +8,7 @@ var url = "http://scheduler.taskcluster.net/v1/task-graph/cSdoUlWPTcmx5Ka2gbucVQ
 function constructUrl() {
     var pageUrl = window.location['href'];
     console.log("MY LOCATION IS ", pageUrl);
-    var param = pageUrl.split("?")[1]
+    var param = pageUrl.split("?")[1];
     var taskID = param.split("=")[1];
     console.log("taskId is ", taskID);
     url = "http://scheduler.taskcluster.net/v1/task-graph/" + taskID + "/inspect";
