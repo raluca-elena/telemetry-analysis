@@ -35,7 +35,7 @@ AF takes as arguments a `Filter.json`, a `Docker image` and optionally some othe
  * Splits the list into loads for tasks
  * Constructs mapper task definition by adding `credentials` `file load` and `custom image`
  * Inserts tasks in Graph Skeleton
- * Constructs reducer,dependent task, that takes as argument mapper tasks ids
+ * Constructs reducer, dependent task, that takes as argument mapper tasks ids
  * Posts graph
  
 ##Monitor TaskGraph
