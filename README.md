@@ -13,10 +13,10 @@ Requirements:
 
 ###AWS Credentials
 
-AF uses `STS temporary credentials` so you need to have a user that has enabled a policy that authorise you to generate FederatedToken credentials. 
+AF uses `STS temporary credentials` so you need to have a user that has enabled a policy that authorise it to generate FederatedToken credentials for your graph. 
 More about STS: http://docs.aws.amazon.com/STS/latest/UsingSTS/Welcome.html
 
-The temporary STS credentials are encrypted so you need to have a public key on your machine and put a private one in the Docker image.
+The temporary STS credentials must be encrypted so you need to have a public key on your machine and put a private one in the Docker image.
 
 ###Customised Docker Image
 Depending on what you want to execute as a task you need to customize a Docker image.
@@ -42,7 +42,7 @@ AF takes as arguments a `Filter.json`, a `Docker image` and optionally some othe
  * AF prints in console 3 links: 
      1. link to task graph inspector
      2. link to the specification of the task graph
-     3. link to a simple html page that Monitors when your Graph has finished executing
+     3. link to a simple html page that monitors when your graph has finished executing
   
 
 
